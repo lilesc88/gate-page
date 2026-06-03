@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="备用线路入口 - 请扫码获取最新可用地址">
-<title>备用入口 · 请扫码访问</title>
+<title>备用入口 · 请扫码访�?/title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -147,7 +147,7 @@
   </div>
 
   <div class="status-card">
-    <h3>📡 当前线路状态</h3>
+    <h3>📡 当前线路状�?/h3>
     <ul class="domain-list" id="domainList">
       <li class="domain-item">
         <span class="domain-name">m.skcloudtop.top</span>
@@ -162,24 +162,22 @@
 </div>
 
 <script>
-// ====== 配置区：在这里添加/删除备用域名 ======
+// ====== 配置区：在这里添�?删除备用域名 ======
 const DOMAINS = [
   { name: 'm.skcloudtop.top', url: 'https://m.skcloudtop.top' },
-  // 备用域名在这里加 ↓
-  // { name: 'm2.xxx.com',   url: 'https://m2.xxx.com' },
+  // 备用域名在这里加 �?  // { name: 'm2.xxx.com',   url: 'https://m2.xxx.com' },
   // { name: 'm3.xxx.com',   url: 'https://m3.xxx.com' },
 ];
 
-const CHECK_TIMEOUT = 5000; // 每个域名检测超时(ms)
+const CHECK_TIMEOUT = 5000; // 每个域名检测超�?ms)
 const RETRY_INTERVAL = 30000; // 自动重试间隔(ms)
 
 // ====== QR 码生成（纯前端，无依赖） ======
 function generateQR(text, size) {
-  // 用 Google Charts API 生成二维码（免费，无需 API key）
-  const encoded = encodeURIComponent(text);
-  return `<img src="https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}&choe=UTF-8" 
+  // �?Google Charts API 生成二维码（免费，无需 API key�?  const encoded = encodeURIComponent(text);
+  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&margin=10" 
                alt="QR Code" style="width:${size}px;height:${size}px;border-radius:8px;" 
-               onerror="this.outerHTML='<div style=\\'padding:40px;color:#64748b;font-size:14px\\'>二维码加载失败<br>请手动复制地址</div>'">`;
+               onerror="this.outerHTML='<div style=\\'padding:40px;color:#64748b;font-size:14px\\'>二维码加载失�?br>请手动复制地址</div>'">`;
 }
 
 function updateQR(domain) {
@@ -190,7 +188,7 @@ function updateQR(domain) {
   if (hint) hint.textContent = domain.name || domain;
 }
 
-// ====== 域名可用性检测 ======
+// ====== 域名可用性检�?======
 async function checkDomain(domain) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
@@ -209,7 +207,7 @@ function renderStatus(results) {
   list.innerHTML = '';
   results.forEach((r, i) => {
     const statusClass = r.status === 'online' ? 'online' : r.status === 'offline' ? 'offline' : 'checking';
-    const statusText = r.status === 'online' ? '✅ 正常' : r.status === 'offline' ? '❌ 不可用' : '⏳ 检测中';
+    const statusText = r.status === 'online' ? '�?正常' : r.status === 'offline' ? '�?不可�? : '�?检测中';
     list.innerHTML += `
       <li class="domain-item">
         <span class="domain-name">${r.domain}</span>
@@ -219,12 +217,10 @@ function renderStatus(results) {
 }
 
 async function checkAllDomains() {
-  // 初始化状态
-  const results = DOMAINS.map(d => ({ domain: d.name, status: 'checking' }));
+  // 初始化状�?  const results = DOMAINS.map(d => ({ domain: d.name, status: 'checking' }));
   renderStatus(results);
 
-  // 并行检测所有域名
-  const checks = DOMAINS.map(async (d, i) => {
+  // 并行检测所有域�?  const checks = DOMAINS.map(async (d, i) => {
     const online = await checkDomain(d);
     results[i].status = online ? 'online' : 'offline';
     renderStatus(results);
@@ -238,15 +234,13 @@ async function checkAllDomains() {
   if (onlineDomains.length > 0) {
     updateQR(onlineDomains[0]);
   }
-  // 如果全部离线，二维码保持指向主域名
-}
+  // 如果全部离线，二维码保持指向主域�?}
 
-// ====== 初始化 ======
+// ====== 初始�?======
 document.addEventListener('DOMContentLoaded', () => {
   // 初始二维码指向主域名
   updateQR(DOMAINS[0]);
-  // 检测所有域名
-  checkAllDomains();
+  // 检测所有域�?  checkAllDomains();
   // 定时重检
   setInterval(checkAllDomains, RETRY_INTERVAL);
 });
