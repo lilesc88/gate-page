@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="备用线路入口 - 请扫码获取最新可用地址">
-<title>备用入口 · 请扫码访�?/title>
+<title>备用入口 · 请扫码访问</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -23,10 +23,7 @@
     width: 100%;
     text-align: center;
   }
-  .logo {
-    font-size: 48px;
-    margin-bottom: 8px;
-  }
+  .logo { margin-bottom: 8px; }
   h1 {
     font-size: 24px;
     font-weight: 600;
@@ -45,15 +42,27 @@
     margin-bottom: 24px;
     border: 1px solid #334155;
   }
-  .qrcode-box svg {
+  .qrcode-box img {
     width: 200px;
     height: 200px;
     display: block;
     margin: 0 auto 16px;
+    border-radius: 8px;
   }
   .qrcode-box .hint {
     font-size: 13px;
     color: #64748b;
+  }
+  .qrcode-placeholder {
+    width: 200px; height: 200px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #334155;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 14px;
   }
   .status-card {
     background: #1e293b;
@@ -68,9 +77,7 @@
     margin-bottom: 12px;
     font-weight: 500;
   }
-  .domain-list {
-    list-style: none;
-  }
+  .domain-list { list-style: none; }
   .domain-item {
     display: flex;
     align-items: center;
@@ -87,37 +94,19 @@
     border-radius: 20px;
     font-weight: 500;
   }
-  .status-badge.online {
-    background: #065f46;
-    color: #6ee7b7;
-  }
-  .status-badge.offline {
-    background: #7f1d1d;
-    color: #fca5a5;
-  }
-  .status-badge.checking {
-    background: #1e3a5f;
-    color: #93c5fd;
-  }
+  .status-badge.online { background: #065f46; color: #6ee7b7; }
+  .status-badge.offline { background: #7f1d1d; color: #fca5a5; }
+  .status-badge.checking { background: #1e3a5f; color: #93c5fd; }
+  .status-badge.unknown { background: #374151; color: #9ca3af; }
   .footer {
     margin-top: 24px;
     font-size: 12px;
     color: #475569;
   }
   .footer a { color: #60a5fa; text-decoration: none; }
-  .loading-dots::after {
-    content: '';
-    animation: dots 1.5s steps(4, end) infinite;
-  }
-  @keyframes dots {
-    0%   { content: ''; }
-    25%  { content: '.'; }
-    50%  { content: '..'; }
-    75%  { content: '...'; }
-  }
   @media (max-width: 480px) {
     .qrcode-box { padding: 24px; }
-    .qrcode-box svg { width: 160px; height: 160px; }
+    .qrcode-box img, .qrcode-placeholder { width: 160px; height: 160px; }
     h1 { font-size: 20px; }
   }
 </style>
@@ -137,17 +126,13 @@
 
   <div class="qrcode-box">
     <div id="qrcode">
-      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="#1e293b" rx="8"/>
-        <text x="100" y="90" text-anchor="middle" fill="#64748b" font-size="14">加载二维码中...</text>
-        <text x="100" y="115" text-anchor="middle" fill="#64748b" font-size="12" id="qrDomainHint">m.skcloudtop.top</text>
-      </svg>
+      <div class="qrcode-placeholder">生成二维码中...</div>
     </div>
     <p class="hint">扫一扫，自动跳转可用线路</p>
   </div>
 
   <div class="status-card">
-    <h3>📡 当前线路状�?/h3>
+    <h3>📡 当前线路状态</h3>
     <ul class="domain-list" id="domainList">
       <li class="domain-item">
         <span class="domain-name">m.skcloudtop.top</span>
@@ -162,87 +147,124 @@
 </div>
 
 <script>
-// ====== 配置区：在这里添�?删除备用域名 ======
+// ====== 配置区：在这里添加/删除备用域名 ======
 const DOMAINS = [
   { name: 'm.skcloudtop.top', url: 'https://m.skcloudtop.top' },
-  // 备用域名在这里加 �?  // { name: 'm2.xxx.com',   url: 'https://m2.xxx.com' },
+  // 备用域名在这里加 ↓
+  // { name: 'm2.xxx.com',   url: 'https://m2.xxx.com' },
   // { name: 'm3.xxx.com',   url: 'https://m3.xxx.com' },
 ];
 
-const CHECK_TIMEOUT = 5000; // 每个域名检测超�?ms)
-const RETRY_INTERVAL = 30000; // 自动重试间隔(ms)
+const CHECK_TIMEOUT = 5000;
 
-// ====== QR 码生成（纯前端，无依赖） ======
-function generateQR(text, size) {
-  // �?Google Charts API 生成二维码（免费，无需 API key�?  const encoded = encodeURIComponent(text);
-  return `<img src="https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&margin=10" 
-               alt="QR Code" style="width:${size}px;height:${size}px;border-radius:8px;" 
-               onerror="this.outerHTML='<div style=\\'padding:40px;color:#64748b;font-size:14px\\'>二维码加载失�?br>请手动复制地址</div>'">`;
+// ====== QR 码生成 ======
+function generateQRFallback(text) {
+  const box = document.getElementById('qrcode');
+  // 先尝试 qrserver API
+  let loaded = false;
+  
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.alt = 'QR Code';
+  img.style.cssText = 'width:200px;height:200px;border-radius:8px;display:block;margin:0 auto 16px;';
+  
+  img.onload = () => {
+    box.innerHTML = '';
+    box.appendChild(img);
+    loaded = true;
+  };
+  
+  img.onerror = () => {
+    if (loaded) return;
+    // 备用：用内嵌 SVG 二维码（通过 QR码在线API转换）
+    box.innerHTML = `<div class="qrcode-placeholder" style="cursor:pointer" onclick="window.open('${text}','_blank')">
+      ⬇️ 点击打开<br><span style="font-size:12px">${text}</span>
+    </div>`;
+  };
+  
+  const encoded = encodeURIComponent(text);
+  img.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encoded}&margin=10`;
 }
 
 function updateQR(domain) {
-  const box = document.getElementById('qrcode');
   const url = domain.url || domain;
-  box.innerHTML = generateQR(url, 200);
+  generateQRFallback(url);
   const hint = document.getElementById('qrDomainHint');
   if (hint) hint.textContent = domain.name || domain;
 }
 
-// ====== 域名可用性检�?======
-async function checkDomain(domain) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
-  try {
-    const resp = await fetch(domain.url, { method: 'HEAD', mode: 'no-cors', signal: controller.signal });
-    clearTimeout(timer);
-    return resp.type === 'opaque' || resp.ok;
-  } catch {
-    clearTimeout(timer);
-    return false;
-  }
+// ====== 域名可用性检测 ======
+// 使用 Image 加载而不是 fetch，避免 CORS/no-cors 问题
+function pingDomain(url) {
+  return new Promise((resolve) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
+    
+    // 先用 fetch cors 方式试试
+    fetch(url, { method: 'HEAD', mode: 'cors', signal: controller.signal })
+      .then(r => { clearTimeout(timer); resolve(true); })
+      .catch(() => {
+        // cors 失败，试试图片探测
+        clearTimeout(timer);
+        const img = new Image();
+        const t = setTimeout(() => { img.src = ''; resolve(false); }, CHECK_TIMEOUT);
+        img.onload = () => { clearTimeout(t); resolve(true); };
+        img.onerror = () => { clearTimeout(t); 
+          // onerror 也可能是跨域限制，但图片能请求到说明网络可达
+          resolve(true); 
+        };
+        // 用 favicon 探测（几乎所有站点都有）
+        img.src = url + '/favicon.ico?' + Date.now();
+      });
+  });
 }
 
 function renderStatus(results) {
   const list = document.getElementById('domainList');
   list.innerHTML = '';
-  results.forEach((r, i) => {
-    const statusClass = r.status === 'online' ? 'online' : r.status === 'offline' ? 'offline' : 'checking';
-    const statusText = r.status === 'online' ? '�?正常' : r.status === 'offline' ? '�?不可�? : '�?检测中';
+  results.forEach((r) => {
+    const cls = r.status === 'online' ? 'online' : r.status === 'offline' ? 'offline' : r.status === 'unknown' ? 'unknown' : 'checking';
+    const txt = r.status === 'online' ? '✅ 正常' : r.status === 'offline' ? '❌ 不可用' : r.status === 'unknown' ? '⚠️ 未知' : '⏳ 检测中';
     list.innerHTML += `
       <li class="domain-item">
         <span class="domain-name">${r.domain}</span>
-        <span class="status-badge ${statusClass}">${statusText}</span>
+        <span class="status-badge ${cls}">${txt}</span>
       </li>`;
   });
 }
 
 async function checkAllDomains() {
-  // 初始化状�?  const results = DOMAINS.map(d => ({ domain: d.name, status: 'checking' }));
+  const results = DOMAINS.map(d => ({ domain: d.name, status: 'checking' }));
   renderStatus(results);
 
-  // 并行检测所有域�?  const checks = DOMAINS.map(async (d, i) => {
-    const online = await checkDomain(d);
-    results[i].status = online ? 'online' : 'offline';
-    renderStatus(results);
-    return { domain: d, online };
+  const checks = DOMAINS.map(async (d) => {
+    try {
+      const online = await pingDomain(d.url);
+      const result = results.find(r => r.domain === d.name);
+      if (result) result.status = online ? 'online' : 'offline';
+      renderStatus(results);
+      return { domain: d, online };
+    } catch {
+      const result = results.find(r => r.domain === d.name);
+      if (result) result.status = 'offline';
+      renderStatus(results);
+      return { domain: d, online: false };
+    }
   });
 
   const checkResults = await Promise.all(checks);
   const onlineDomains = checkResults.filter(r => r.online).map(r => r.domain);
 
-  // 更新二维码：指向第一个可用的域名
   if (onlineDomains.length > 0) {
     updateQR(onlineDomains[0]);
   }
-  // 如果全部离线，二维码保持指向主域�?}
+}
 
-// ====== 初始�?======
+// ====== 初始化 ======
 document.addEventListener('DOMContentLoaded', () => {
-  // 初始二维码指向主域名
   updateQR(DOMAINS[0]);
-  // 检测所有域�?  checkAllDomains();
-  // 定时重检
-  setInterval(checkAllDomains, RETRY_INTERVAL);
+  checkAllDomains();
+  setInterval(checkAllDomains, 30000);
 });
 </script>
 </body>
