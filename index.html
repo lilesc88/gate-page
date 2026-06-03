@@ -1,1 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backup Entry - Scan QR Code</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .container { max-width: 480px; width: 100%; text-align: center; }
+  .logo { margin-bottom: 8px; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; color: #f1f5f9; }
+  .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 32px; }
+  .qrcode-box { background: #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #334155; }
+  .qrcode-box img { width: 200px; height: 200px; display: block; margin: 0 auto 16px; border-radius: 8px; }
+  .qrcode-box .hint { font-size: 13px; color: #64748b; }
+  .qr-fallback { width: 200px; height: 200px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; background: #334155; border-radius: 8px; color: #64748b; font-size: 14px; cursor: pointer; }
+  .status-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid #334155; }
+  .status-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 12px; font-weight: 500; }
+  .domain-list { list-style: none; }
+  .domain-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+  .domain-item:last-child { border-bottom: none; }
+  .domain-name { color: #e2e8f0; font-family: monospace; }
+  .status-badge { font-size: 12px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+  .status-badge.online { background: #065f46; color: #6ee7b7; }
+  .status-badge.offline { background: #7f1d1d; color: #fca5a5; }
+  .status-badge.checking { background: #1e3a5f; color: #93c5fd; }
+  .footer { margin-top: 24px; font-size: 12px; color: #475569; }
+  .footer a { color: #60a5fa; text-decoration: none; }
+  #qrcode img { width: 200px; height: 200px; display: block; margin: 0 auto 16px; border-radius: 8px; }
+  @media (max-width: 480px) { .qrcode-box { padding: 24px; } .qrcode-box img, .qr-fallback, #qrcode img { width: 160px; height: 160px; } h1 { font-size: 20px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <svg viewBox="0 0 48 48" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="8" fill="#111"/>
+      <path d="M33.5 11.5c-1.1 0-2-.9-2-2h-3.5v18.3c0 3.8-3.1 7-6.9 7s-6.9-3.1-6.9-6.9 3.1-6.9 6.9-6.9c.7 0 1.4.1 2 .3v-3.6c-.7-.1-1.3-.2-2-.2-5.8 0-10.5 4.7-10.5 10.5S15.7 36.5 21.5 36.5 32 31.8 32 26V18c1.5 1.2 3.4 2 5.5 2v-4.5c-2.2 0-4.2-1.3-5.5-3.3L33.5 11.5h-.7z" fill="white"/>
+      <path d="M33.5 11.5c-1.1 0-2-.9-2-2h-3.5v18.3c0 3.8-3.1 7-6.9 7s-6.9-3.1-6.9-6.9 3.1-6.9 6.9-6.9c.7 0 1.4.1 2 .3v-3.6c-.7-.1-1.3-.2-2-.2-5.8 0-10.5 4.7-10.5 10.5S15.7 36.5 21.5 36.5 32 31.8 32 26V18c1.5 1.2 3.4 2 5.5 2v-4.5c-2.2 0-4.2-1.3-5.5-3.3L33.5 11.5h-.7z" fill="#25f4ee" transform="translate(2.5,2.5)" opacity="0.7"/>
+      <path d="M33.5 11.5c-1.1 0-2-.9-2-2h-3.5v18.3c0 3.8-3.1 7-6.9 7s-6.9-3.1-6.9-6.9 3.1-6.9 6.9-6.9c.7 0 1.4.1 2 .3v-3.6c-.7-.1-1.3-.2-2-.2-5.8 0-10.5 4.7-10.5 10.5S15.7 36.5 21.5 36.5 32 31.8 32 26V18c1.5 1.2 3.4 2 5.5 2v-4.5c-2.2 0-4.2-1.3-5.5-3.3L33.5 11.5h-.7z" fill="#ff004f" transform="translate(5,5)" opacity="0.7"/>
+    </svg>
+  </div>
+  <h1>备用入口</h1>
+  <p class="subtitle">扫码获取最新可用地址</p>
+
+  <div class="qrcode-box">
+    <div id="qrcode">
+      <div class="qr-fallback">Generating QR...</div>
+    </div>
+    <p class="hint">Scan to access available route</p>
+  </div>
+
+  <div class="status-card">
+    <h3>Route Status</h3>
+    <ul class="domain-list" id="domainList">
+      <li class="domain-item">
+        <span class="domain-name">m.skcloudtop.top</span>
+        <span class="status-badge checking">Checking...</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    If all routes are unavailable, please try again later or contact support
+  </div>
+</div>
+
+<script>
+var DOMAINS = [
+  { name: 'm.skcloudtop.top', url: 'https://m.skcloudtop.top' }
+];
+
+function loadQR() {
+  var url = 'https://m.skcloudtop.top';
+  var box = document.getElementById('qrcode');
+  var img = new Image();
+  img.onload = function() {
+    box.innerHTML = '';
+    box.appendChild(img);
+  };
+  img.onerror = function() {
+    box.innerHTML = '<div class="qr-fallback" onclick="window.open(\'' + url + '\',\'_blank\')">Click to open<br><span style="font-size:11px">' + url + '</span></div>';
+  };
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(url) + '&margin=10';
+  img.style.cssText = 'width:200px;height:200px;border-radius:8px;display:block;margin:0 auto 16px;';
+}
+
+function checkSites() {
+  var d = DOMAINS[0];
+  var badge = document.querySelector('.status-badge');
+  var item = document.querySelector('.domain-item');
+  if (!badge) return;
+  badge.textContent = 'Checking...';
+  badge.className = 'status-badge checking';
+  var img = new Image();
+  var t = setTimeout(function() {
+    badge.textContent = 'Unavailable';
+    badge.className = 'status-badge offline';
+  }, 5000);
+  img.onload = function() { clearTimeout(t); badge.textContent = 'Online'; badge.className = 'status-badge online'; };
+  img.onerror = function() { clearTimeout(t); badge.textContent = 'Online'; badge.className = 'status-badge online'; };
+  img.src = d.url + '/favicon.ico?' + Date.now();
+}
+
+window.onload = function() {
+  loadQR();
+  checkSites();
+  setInterval(checkSites, 30000);
+};
+</script>
+</body>
+</html>
 
