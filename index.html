@@ -6,23 +6,13 @@
 <title>Backup Entry - Scan QR Code</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #0f172a;
-    color: #e2e8f0;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
   .container { max-width: 480px; width: 100%; text-align: center; }
   .logo { margin-bottom: 8px; }
   h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; color: #f1f5f9; }
   .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 32px; }
   .qrcode-box { background: #1e293b; border-radius: 16px; padding: 32px; margin-bottom: 24px; border: 1px solid #334155; }
-  .qrcode-box img { width: 200px; height: 200px; display: block; margin: 0 auto 16px; border-radius: 8px; }
+  #qrcode img { width: 200px; height: 200px; display: block; margin: 0 auto 16px; border-radius: 8px; }
   .qrcode-box .hint { font-size: 13px; color: #64748b; }
   .qr-fallback { width: 200px; height: 200px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; background: #334155; border-radius: 8px; color: #64748b; font-size: 14px; cursor: pointer; }
   .status-card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid #334155; }
@@ -36,9 +26,7 @@
   .status-badge.offline { background: #7f1d1d; color: #fca5a5; }
   .status-badge.checking { background: #1e3a5f; color: #93c5fd; }
   .footer { margin-top: 24px; font-size: 12px; color: #475569; }
-  .footer a { color: #60a5fa; text-decoration: none; }
-  #qrcode img { width: 200px; height: 200px; display: block; margin: 0 auto 16px; border-radius: 8px; }
-  @media (max-width: 480px) { .qrcode-box { padding: 24px; } .qrcode-box img, .qr-fallback, #qrcode img { width: 160px; height: 160px; } h1 { font-size: 20px; } }
+  @media (max-width: 480px) { .qrcode-box { padding: 24px; } #qrcode img, .qr-fallback { width: 160px; height: 160px; } h1 { font-size: 20px; } }
 </style>
 </head>
 <body>
@@ -63,12 +51,7 @@
 
   <div class="status-card">
     <h3>Route Status</h3>
-    <ul class="domain-list" id="domainList">
-      <li class="domain-item">
-        <span class="domain-name">m.skcloudtop.top</span>
-        <span class="status-badge checking">Checking...</span>
-      </li>
-    </ul>
+    <ul class="domain-list" id="domainList"></ul>
   </div>
 
   <div class="footer">
@@ -77,22 +60,20 @@
 </div>
 
 <script>
+// ====== CONFIG: Add/remove domains here ======
 var DOMAINS = [
-  { name: 'm.skcloudtop.top', url: 'https://m.skcloudtop.top' }
-  { name: 'kt.skcloudtop.top', url: 'https://kt.skcloudtop.top' }
-  { name: 'wap.skcloudtop.top', url: 'https://wap.skcloudtop.top' }
-  { name: '1.skcloudtop.top', url: 'https://1.skcloudtop.top' }
-  { name: '2.skcloudtop.top', url: 'https://2.skcloudtop.top' }
+  { name: 'm.skcloudtop.top',  url: 'https://m.skcloudtop.top' },
+  { name: 'kt.skcloudtop.top', url: 'https://kt.skcloudtop.top' },
+  { name: 'wap.skcloudtop.top', url: 'https://wap.skcloudtop.top' },
+  { name: '1.skcloudtop.top',  url: 'https://1.skcloudtop.top' },
+  { name: '2.skcloudtop.top',  url: 'https://2.skcloudtop.top' }
 ];
 
-function loadQR() {
-  var url = 'https://m.skcloudtop.top';
+// ====== QR Code ======
+function loadQR(url) {
   var box = document.getElementById('qrcode');
   var img = new Image();
-  img.onload = function() {
-    box.innerHTML = '';
-    box.appendChild(img);
-  };
+  img.onload = function() { box.innerHTML = ''; box.appendChild(img); };
   img.onerror = function() {
     box.innerHTML = '<div class="qr-fallback" onclick="window.open(\'' + url + '\',\'_blank\')">Click to open<br><span style="font-size:11px">' + url + '</span></div>';
   };
@@ -100,29 +81,49 @@ function loadQR() {
   img.style.cssText = 'width:200px;height:200px;border-radius:8px;display:block;margin:0 auto 16px;';
 }
 
-function checkSites() {
-  var d = DOMAINS[0];
-  var badge = document.querySelector('.status-badge');
-  var item = document.querySelector('.domain-item');
-  if (!badge) return;
-  badge.textContent = 'Checking...';
-  badge.className = 'status-badge checking';
-  var img = new Image();
-  var t = setTimeout(function() {
-    badge.textContent = 'Unavailable';
-    badge.className = 'status-badge offline';
-  }, 5000);
-  img.onload = function() { clearTimeout(t); badge.textContent = 'Online'; badge.className = 'status-badge online'; };
-  img.onerror = function() { clearTimeout(t); badge.textContent = 'Online'; badge.className = 'status-badge online'; };
-  img.src = d.url + '/favicon.ico?' + Date.now();
+// ====== Domain Check ======
+function checkAll() {
+  var list = document.getElementById('domainList');
+  list.innerHTML = '';
+  DOMAINS.forEach(function(d, idx) {
+    var li = document.createElement('li');
+    li.className = 'domain-item';
+    li.innerHTML = '<span class="domain-name">' + d.name + '</span><span class="status-badge checking">Checking...</span>';
+    list.appendChild(li);
+
+    var badge = li.querySelector('.status-badge');
+    var img = new Image();
+    var t = setTimeout(function() {
+      badge.textContent = 'Unavailable';
+      badge.className = 'status-badge offline';
+    }, 5000);
+
+    img.onload = function() {
+      clearTimeout(t);
+      badge.textContent = 'Online';
+      badge.className = 'status-badge online';
+      // First online domain -> update QR
+      if (idx === 0 || document.querySelectorAll('.status-badge.online').length === 1) {
+        loadQR(d.url);
+      }
+    };
+    img.onerror = function() {
+      clearTimeout(t);
+      badge.textContent = 'Online';
+      badge.className = 'status-badge online';
+      if (idx === 0 || document.querySelectorAll('.status-badge.online').length === 1) {
+        loadQR(d.url);
+      }
+    };
+    img.src = d.url + '/favicon.ico?' + Date.now();
+  });
+  loadQR(DOMAINS[0].url);
 }
 
 window.onload = function() {
-  loadQR();
-  checkSites();
-  setInterval(checkSites, 30000);
+  checkAll();
+  setInterval(checkAll, 30000);
 };
 </script>
 </body>
 </html>
-
